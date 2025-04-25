@@ -2,28 +2,47 @@
 
 #TODO:
 # - add a check if the script is run as root
-# - backup of original file
-# - method to check if website-blocker is active. => two modi: one for appending customs, one for removing
+# - cron job to continously reapply blocks
 
 # get the full directory name, no matter from there the script is called. 
 #https://stackoverflow.com/a/246128
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 REPLACEMENT_IP="127.0.0.1"
 
-# subdomains that are blocked aswell. in hosts there is only domain, i.e. google.com. 
-# we also want to block www.google.com, etc
-SUBDOMAINS=(www m)
+if [ "$1" == "block" ]; then
+    backup="/etc/hosts.backup"
+    # check if there is already a backup file. If yes => blocks are already added, cannot be added again
+    if [ -f $backup ]; then
+        echo "Backup file already exists. Please run 'sudo $0 unblock' first"
+        exit 1
+    fi
 
+    # creating backup of current /etc/hosts file
+    cp /etc/hosts $backup
 
-while IFS= read -r line; do
-    echo "processing $line"
-    echo "$REPLACEMENT_IP $line" >> /etc/hosts
+    # subdomains that are blocked aswell. in hosts there is only domain, i.e. google.com. 
+    # we also want to block www.google.com, etc
+    SUBDOMAINS=(www m de at)
 
-    # block the subdomains
-    for ((i=0; i<${#SUBDOMAINS[@]}; i++)); do
-        echo "accessing item: $i , elem is ${SUBDOMAINS[$i]}"
-        echo "$REPLACEMENT_IP ${SUBDOMAINS[$i]}.$line" >> /etc/hosts
-    done
+    echo "# custom entries (for blocking, see \$CODING/github/website-blocker">> /etc/hosts
+    echo "# or 'https://github.com/cesipy/website-blocker')">> /etc/hosts
 
-done < "$SCRIPT_DIR/hosts.txt"
+    while IFS= read -r line; do
+        echo "processing $line"
+        echo "$REPLACEMENT_IP $line" >> /etc/hosts
 
+        # block the subdomains
+        for ((i=0; i<${#SUBDOMAINS[@]}; i++)); do
+            echo "$REPLACEMENT_IP ${SUBDOMAINS[$i]}.$line" >> /etc/hosts
+        done
+
+    done < "$SCRIPT_DIR/hosts.txt"
+
+elif [ "$1" == "unblock" ]; then 
+    cp /etc/hosts.backup /etc/hosts
+    rm /etc/hosts.backup
+
+else 
+    echo "Please provide a valid argument: block or unblock"
+    exit 1
+fi
