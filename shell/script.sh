@@ -39,6 +39,11 @@ if [ "$1" == "block" ]; then
     done < "$SCRIPT_DIR/hosts.txt"
 
 elif [ "$1" == "unblock" ]; then 
+    if [ ! -f /etc/hosts.backup ]; then
+        echo "No backup file found. Please run 'sudo $0 block' first"
+        exit 1
+    fi
+
     cp /etc/hosts.backup /etc/hosts
     rm /etc/hosts.backup
 
