@@ -28,7 +28,7 @@ if [ "$1" == "block" ]; then
     echo "# or 'https://github.com/cesipy/website-blocker')">> /etc/hosts
 
     while IFS= read -r line; do
-        echo "processing $line"
+        # echo "processing $line"
         echo "$REPLACEMENT_IP $line" >> /etc/hosts
 
         # block the subdomains
@@ -37,6 +37,7 @@ if [ "$1" == "block" ]; then
         done
 
     done < "$SCRIPT_DIR/hosts.txt"
+    echo "finished"
 
 elif [ "$1" == "unblock" ]; then 
     if [ ! -f /etc/hosts.backup ]; then
@@ -46,6 +47,8 @@ elif [ "$1" == "unblock" ]; then
 
     cp /etc/hosts.backup /etc/hosts
     rm /etc/hosts.backup
+
+    echo "finished"
 
 else 
     echo "Please provide a valid argument: block or unblock"
